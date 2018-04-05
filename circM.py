@@ -5,6 +5,12 @@ import argparse
 from collections import defaultdict
 
 
+__author__ = "Thomas Hansen (tbh@mbg.au.dk)"
+__lab__ = "ncRNAlab"
+__version__ = '1.0.1'
+
+
+
 circglob = {
     "acsf" : "**/circle_candidates_expr",
     "circrna_finder" : "**/s_filteredJunctions.bed",
@@ -14,6 +20,7 @@ circglob = {
     "ciri2" : "*.ciri.out.txt",
     "dcc" : "**/*",
     "find_circ" : "*.circ_candidates.bed",
+    "find_circ_40" : "*.circ_candidates.bed",
     "knife" : "**/circReads/combinedReports/*_circJuncProbs.txt",
     "mapsplice" : "**/circular_RNAs.txt",
     "uroborus" : "**/circRNA_list.txt",
@@ -131,17 +138,16 @@ class circobject (object):
                    
                 bsj = cols[3]
                     
-        ############# find_circ ####################
-        elif self.algorithm == "find_circ": 
-
-            if (int (cols[8]) < 35 or int (cols[7]) < 35):  #MAPQ default
-               return
-
+    
         ############# find_circ (mapq 40) ####################
         elif self.algorithm == "find_circ_40":
             
-            if int (cols[8]) < 40 or int (cols[7]) < 40:  #MAPQ 40
+            if len (cols) < 21 and (int (cols[8]) < 40 or int (cols[7]) < 40):  
                 return
+
+            elif int (cols[9]) < 40 or int (cols[8]) < 40:  
+               return
+
             
         ############# knife ####################
         
@@ -187,6 +193,9 @@ class circobject (object):
         self.dPos[(chrom, start, end, strand)] = 1
         
 
+    
+
+
     def output (self, files, onlyBsj = True):
 
         output = ["#chrom", "start", "end", "name", "score", "strand"]
@@ -201,7 +210,9 @@ class circobject (object):
             else:
                 output += [f + "_BSJ", f + "_LIN"]
                 
-                
+
+        print "\t".join (output)
+
         circ_index = 1
 
         for (chrom, start, end, strand) in self.dPos:
@@ -258,7 +269,6 @@ circ = circobject (args.algorithm, args.cutoff_file, args.cutoff_merged)
 
 files = circ.get_files (args.files)
 
-
 files.sort ()
 
 
@@ -267,7 +277,9 @@ print >>sys.stderr, "Cutoff...:"
 print >>sys.stderr, "\tcircRNA must have at least", args.cutoff_file, "reads in one sample to be included"
 print >>sys.stderr, "\tcircRNA must have at least", args.cutoff_merged, "reads in total to be included"
 print >>sys.stderr, "Found...:", len(files), "files for analysis"
-   
+
+
+circ.output   
 
 for file in files:
    
